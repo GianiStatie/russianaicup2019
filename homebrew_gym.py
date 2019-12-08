@@ -22,10 +22,10 @@ class HomebrewGym():
 		self.ghost.reset()
 		time.sleep(1)
 		self.gclient = GameClient(self.host, self.port, self.token)
-		player_view = self.gclient.get_raw_state()
-		player_unit = self._get_player_unit(player_view)[0]
-		state = self.extractor.get_game_state(player_view, player_unit)
-		return state, player_view, player_unit
+		self.player_view = self.gclient.get_raw_state()
+		self.player_unit = self._get_player_unit()[0]
+		state = self.extractor.get_game_state(self.player_view, self.player_unit)
+		return state
 
 	def step(self, actions):
 		"""
@@ -33,33 +33,42 @@ class HomebrewGym():
 			outputs: state, reward, done, info
 		"""
 		self.gclient.send_actions(actions)
-		player_view = self.gclient.get_raw_state()
-		if player_view is None:
+		self.player_view = self.gclient.get_raw_state()
+		if self.player_view is None:
 			return [], -1, True, {}
-		player_unit = self._get_player_unit(player_view)[0]
-		state  = self.extractor.get_game_state(player_view, player_unit)
-		info   = self._get_player_info(player_view, player_unit)
+		player_unit = self._get_player_unit()[0]
+		state  = self.extractor.get_game_state(self.player_view, self.player_unit)
+		info   = self._get_player_info()
 		reward = self._calculate_reward(info)
 		return state, reward, False, info
-		# return player_view, player_unit, info
 
 	def close(self):
 		self.ghost.stop()
 
+	def get_game(self):
+		return self.player_view.game
+
+	def get_player_view(self):
+		return self.player_view
+
+	def get_player_unit(self):
+		return self.player_unit
+
 	def set_config(config_path):
 		self.config_path = config_path
 
-	def _get_player_unit(self, player_view):
-		return [unit for unit in player_view.game.units \
-						if unit.player_id == player_view.my_id]
+	def _get_player_unit(self):
+		return [unit for unit in self.player_view.game.units \
+						if unit.player_id == self.player_view.my_id]
 
-	def _get_player_info(self, view, unit):
-		weapon = unit.weapon
-		score  = [player.score for player in view.game.players if player.id == unit.player_id][0]
+	def _get_player_info(self):
+		weapon = self.player_unit.weapon
+		score  = [player.score for player in self.player_view.game.players \
+						if player.id == self.player_unit.player_id][0]
 		info   = {
-			'score': score
-			'health': unit.health,
-			'game_ticks': view.game.current_tick,
+			'score': score,
+			'health': self.player_unit.health,
+			'game_ticks': self.player_view.game.current_tick,
 			'weapon_typ': None if weapon is None else weapon.typ,
 		}
 		return info
