@@ -1,4 +1,0 @@
-The size of the tile is 1 unit in the game world (as I understand it one pixel in the renderer). Accordingly, the size of the field is: width = game.level.tiles.size() height = game.level.tiles[0].size()
-
-
-game.level.tiles[int(unit.position.x)][int(unit.position.y)]
