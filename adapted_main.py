@@ -19,7 +19,6 @@ if __name__ == "__main__":
 	    actions[player_unit.id] = strategy.get_action(
 	                        player_unit, player_view.game)
 	    player_view, player_unit, info = env.step(actions)
-	    print(info)
 
     env.close()  
 

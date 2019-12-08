@@ -39,8 +39,9 @@ class HomebrewGym():
 		player_unit = self._get_player_unit(player_view)[0]
 		state  = self.extractor.get_game_state(player_view, player_unit)
 		info   = self._get_player_info(player_view, player_unit)
-		reward = 0
+		reward = self._calculate_reward(info)
 		return state, reward, False, info
+		# return player_view, player_unit, info
 
 	def close(self):
 		self.ghost.stop()
@@ -54,13 +55,15 @@ class HomebrewGym():
 
 	def _get_player_info(self, view, unit):
 		weapon = unit.weapon
-		info = {
+		score  = [player.score for player in view.game.players if player.id == unit.player_id][0]
+		info   = {
+			'score': score
 			'health': unit.health,
 			'game_ticks': view.game.current_tick,
 			'weapon_typ': None if weapon is None else weapon.typ,
 		}
 		return info
 
-	def _calculate_reward(self):
-		pass
+	def _calculate_reward(self, info):
+		return info['score']/info['game_ticks']
 
