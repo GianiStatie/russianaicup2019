@@ -4,19 +4,9 @@ import sys
 import neat
 import numpy as np
 
-def distance_sqr(a, b):
-    return (a.x - b.x) ** 2 + (a.y - b.y) ** 2
-
 def scale_state(state):
     max_val = np.amax(state)
     return state/max_val
-
-def get_nearest_enemy(unit, game):
-    nearest_enemy = min(
-            filter(lambda u: u.player_id != unit.player_id, game.units),
-            key=lambda u: distance_sqr(u.position, unit.position),
-            default=None)
-    return nearest_enemy
 
 def get_aim(unit, nearest_enemy):
     aim = model.Vec2Double(0, 0)
@@ -26,7 +16,7 @@ def get_aim(unit, nearest_enemy):
             nearest_enemy.position.y - unit.position.y)
     return aim
 
-def format_action(raw_action, unit, game):
+def format_action(raw_action, unit):
     direction = (raw_action[0]-0.5)*2
     speed = raw_action[1] * 5 # because holy trinity
     jump  = bool(round(raw_action[2]))
@@ -34,7 +24,7 @@ def format_action(raw_action, unit, game):
     relod = bool(round(raw_action[4]))
     swapw = bool(round(raw_action[5]))
     plant = bool(round(raw_action[6]))
-    nearest_enemy = get_nearest_enemy(unit, game)
+    nearest_enemy = env.get_nearest_enemy()
     aim  = get_aim(unit, nearest_enemy)
 
     action = model.UnitAction(
@@ -61,9 +51,8 @@ def eval_genomes(genomes, config, render=False):
             state_ress = scale_state(state).flatten()
 
             raw_action = net.activate(state_ress)
-            game = env.get_game()
-            unit = env.get_player_unit()
-            action = format_action(raw_action, unit, game)
+            unit   = env.get_player_unit()
+            action = format_action(raw_action, unit)
             state, reward, done, info = env.step(action)
             
             if done: break
