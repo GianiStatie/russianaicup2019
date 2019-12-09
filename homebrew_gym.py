@@ -4,16 +4,17 @@ from src.state_extractor import StateExtractor
 import time
 
 class HomebrewGym():
-    def __init__(self, host, port, token, config_path=None):
+    def __init__(self, host, port, token, config_path=None, render_env=True):
         self.host  = host
         self.port  = port
         self.token = token
         self.config_path = config_path
+        self.render_env  = render_env
 
         self.extractor = StateExtractor()
 
     def make(self):
-        self.ghost = MacGameHost(self.config_path)
+        self.ghost = MacGameHost(self.config_path, self.render_env)
         self.ghost.start()
         time.sleep(1)
         self.gclient = GameClient(self.host, self.port, self.token)
@@ -72,11 +73,14 @@ class HomebrewGym():
                         if unit.player_id == self.player_view.my_id]
 
     def _get_player_info(self):
-        weapon = self.player_unit.weapon
-        score  = [player.score for player in self.player_view.game.players \
+        weapon   = self.player_unit.weapon
+        ego_score = [player.score for player in self.player_view.game.players \
                         if player.id == self.player_unit.player_id][0]
+        ene_score = [player.score for player in self.player_view.game.players \
+                        if player.id != self.player_unit.player_id][0]
         info   = {
-            'score': score,
+            'ego_score': ego_score,
+            'ene_score': ene_score,
             'health': self.player_unit.health,
             'game_ticks': self.player_view.game.current_tick,
             'weapon_typ': None if weapon is None else weapon.typ,
@@ -84,7 +88,14 @@ class HomebrewGym():
         return info
 
     def _calculate_reward(self, info):
-        nearest_enemy  = self.get_nearest_enemy()
-        distance_to_ne = self.get_distance(nearest_enemy.position, self.player_unit.position)
-        return info['score']/info['game_ticks'] + 0.1*(1 - distance_to_ne/688)
+        step_reward = 0
+        if info['game_ticks'] == 1:
+            self.prev_ego_score, self.prev_ene_score = 0, 0
+        if info['ego_score'] > self.prev_ego_score: 
+            step_reward += (info['ego_score'] - self.prev_ego_score)
+            self.prev_ego_score = info['ego_score']
+        if info['ene_score'] > self.prev_ene_score: 
+            step_reward -= (info['ene_score'] - self.prev_ene_score)
+            self.prev_ene_score = info['ene_score']
+        return step_reward
 

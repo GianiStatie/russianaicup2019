@@ -2,12 +2,16 @@ import os
 from multiprocessing import Process
 
 class MacGameHost():
-    def __init__(self, config_path=None):
+    def __init__(self, config_path=None, render_env=True):
         if config_path == None:
             self.config_path = './config.json'
+        self.render_env  = render_env
 
     def _start_app(self):
-        os.system(f'./aicup2019 --config {self.config_path}')
+        if self.render_env:
+            os.system(f'./aicup2019 --config {self.config_path}')
+        else:
+            os.system(f'./aicup2019 --config {self.config_path} --batch-mode')
 
     def _close_app(self):
         os.system('pkill aicup')

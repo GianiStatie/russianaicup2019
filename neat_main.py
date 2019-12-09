@@ -21,9 +21,9 @@ def format_action(raw_action, unit):
     speed = raw_action[1] * 5 # because holy trinity
     jump  = bool(round(raw_action[2]))
     shoot = bool(round(raw_action[3]))
-    relod = bool(round(raw_action[4]))
-    swapw = bool(round(raw_action[5]))
-    plant = bool(round(raw_action[6]))
+    # relod = bool(round(raw_action[4]))
+    # swapw = bool(round(raw_action[5]))
+    # plant = bool(round(raw_action[6]))
     nearest_enemy = env.get_nearest_enemy()
     aim  = get_aim(unit, nearest_enemy)
 
@@ -33,9 +33,9 @@ def format_action(raw_action, unit):
              jump_down=not jump,
              aim=aim,
              shoot=shoot,
-             reload=relod,
-             swap_weapon=swapw,
-             plant_mine=plant)
+             reload=False,
+             swap_weapon=False,
+             plant_mine=False)
 
     return {unit.id: action}
 
@@ -75,14 +75,18 @@ if __name__ == "__main__":
     stats = neat.StatisticsReporter()
     p.add_reporter(stats)
 
+    # # restore checkpoint
+    # p = neat.Checkpointer.restore_checkpoint('./checkpoints/neat-checkpoint-78')
+
     # save a check point file every 10 iterations
-    p.add_reporter(neat.Checkpointer(10))
+    p.add_reporter(neat.Checkpointer(10, 
+                            filename_prefix='./checkpoints/neat-checkpoint-'))
 
     # define environment
     host  = "127.0.0.1" if len(sys.argv) < 2 else sys.argv[1]
     port  = 31001 if len(sys.argv) < 3 else int(sys.argv[2])
     token = "0000000000000000" if len(sys.argv) < 4 else sys.argv[3]
-    env = HomebrewGym(host, port, token)
+    env = HomebrewGym(host, port, token, render_env=False)
     env.make()
 
     # this line runs the previous eval_genomes function. Once done, the best is set to winner
