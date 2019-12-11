@@ -1,1 +1,0 @@
-Here we store checkpoints from running the NEAT algorithm.

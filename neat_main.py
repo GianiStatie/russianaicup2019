@@ -1,8 +1,9 @@
 import model
-from homebrew_gym import HomebrewGym 
+from game import homebrew_gym
 import sys
 import neat
 import numpy as np
+import pickle
 
 def scale_state(state):
     max_val = np.amax(state)
@@ -47,7 +48,7 @@ def eval_genomes(genomes, config, render=False):
         
         state = env.reset()
 
-        for counter in range(5000):            
+        for counter in range(1000):            
             state_ress = scale_state(state).flatten()
 
             raw_action = net.activate(state_ress)
@@ -66,7 +67,7 @@ if __name__ == "__main__":
     #Setup config
     config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
                          neat.DefaultSpeciesSet, neat.DefaultStagnation,
-                         'config-feedforward')
+                         './configs/config-feedforward')
     # creat population
     p = neat.Population(config)
 
@@ -75,19 +76,18 @@ if __name__ == "__main__":
     stats = neat.StatisticsReporter()
     p.add_reporter(stats)
 
-    # # restore checkpoint
-    # p = neat.Checkpointer.restore_checkpoint('./checkpoints/neat-checkpoint-78')
-
     # save a check point file every 10 iterations
     p.add_reporter(neat.Checkpointer(10, 
                             filename_prefix='./checkpoints/neat-checkpoint-'))
+
+    # # restore checkpoint
+    # p = neat.Checkpointer.restore_checkpoint('./checkpoints/neat-checkpoint-78')
 
     # define environment
     host  = "127.0.0.1" if len(sys.argv) < 2 else sys.argv[1]
     port  = 31001 if len(sys.argv) < 3 else int(sys.argv[2])
     token = "0000000000000000" if len(sys.argv) < 4 else sys.argv[3]
-    env = HomebrewGym(host, port, token, render_env=False)
-    env.make()
+    env = homebrew_gym.make(host, port, token, os_name='MacOS', render_env=False)
 
     # this line runs the previous eval_genomes function. Once done, the best is set to winner
     winner = p.run(eval_genomes)
